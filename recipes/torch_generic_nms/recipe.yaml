@@ -41,6 +41,9 @@ requirements:
     - cuda-nvcc ${{ cuda_compiler_version }}.*
     - cuda-cudart-dev ${{ cuda_compiler_version }}.*
     - cuda-cccl
+    - cudnn
+    - libcublas
+    - libnccl
   run:
     - python
     - pytorch >=${{ pytorch }}
