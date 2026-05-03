@@ -17,7 +17,6 @@ source:
 
 build:
   number: 0
-  string: cuda${{ cuda_compiler_version | replace('.', '') }}_torch${{ pytorch | replace('.', '') }}_py${{ CONDA_PY }}_${{ PKG_BUILDNUM }}
   script:
     content:
       - pip install torch==${{ pytorch }} --index-url https://download.pytorch.org/whl/cu${{ cuda_compiler_version | replace('.', '') }}
