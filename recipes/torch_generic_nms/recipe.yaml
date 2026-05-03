@@ -42,7 +42,7 @@ requirements:
     - pytorch >=${{ pytorch }}
     - __cuda
     - cuda-cudart
-  run_constrained:
+  run_constraints:
     - cuda-version >=${{ cuda_compiler_version }}
 
 tests:
