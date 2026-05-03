@@ -3,6 +3,8 @@ context:
   version: "0.1.0"
   source_repo: "ronghanghu/torch_generic_nms"
   commit: "fcf02b41ea9b37988b244ef80583af17baa4a7f0"
+  # Arch list based on CUDA version
+  arch_list: ${{ "8.0;9.0;10.0;12.0+PTX" if cuda_compiler_version == "13.0" else ("7.0;8.0;9.0;10.0;12.0+PTX" if cuda_compiler_version in ("12.8", "12.9") else ("5.0;6.0;7.0;8.0;9.0+PTX" if cuda_compiler_version == "12.4" else "7.0;8.0;9.0+PTX")) }}
 
 package:
   name: ${{ name }}
@@ -22,21 +24,7 @@ build:
       - ${{ PYTHON }} -m pip install . --no-deps --no-build-isolation -vv
     env:
       FORCE_CUDA: "1"
-      - if: ${{ cuda_compiler_version == "12.4" and linux }}
-        then:
-          TORCH_CUDA_ARCH_LIST: "5.0;6.0;7.0;8.0;9.0+PTX"
-      - if: ${{ cuda_compiler_version == "12.4" and win }}
-        then:
-          TORCH_CUDA_ARCH_LIST: "7.0;8.0;9.0+PTX"
-      - if: ${{ cuda_compiler_version == "12.6" }}
-        then:
-          TORCH_CUDA_ARCH_LIST: "7.0;8.0;9.0+PTX"
-      - if: ${{ cuda_compiler_version == "12.8" or cuda_compiler_version == "12.9" }}
-        then:
-          TORCH_CUDA_ARCH_LIST: "7.0;8.0;9.0;10.0;12.0+PTX"
-      - if: ${{ cuda_compiler_version == "13.0" }}
-        then:
-          TORCH_CUDA_ARCH_LIST: "8.0;9.0;10.0;12.0+PTX"
+      TORCH_CUDA_ARCH_LIST: ${{ arch_list }}
   missing_dso_whitelist:
     - "*/libc10*"
     - "*/libtorch*"
