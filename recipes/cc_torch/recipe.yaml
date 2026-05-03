@@ -43,7 +43,7 @@ requirements:
     - cuda-cccl
     - cudnn
     - libcublas
-    - libnccl
+    - nccl
   run:
     - python
     - pytorch >=${{ pytorch }}
