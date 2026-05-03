@@ -44,6 +44,10 @@ requirements:
     - cudnn
     - libcublas
     - nccl
+    - libcusparse
+    - libcusolver
+    - libcufft
+    - libcusparselt
   run:
     - python
     - pytorch >=${{ pytorch }}
