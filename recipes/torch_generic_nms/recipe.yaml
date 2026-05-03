@@ -35,7 +35,7 @@ requirements:
     - python
     - pip
     - setuptools
-    - cuda-version ${{ cuda_compiler_version }}
+    - cuda-version ==${{ cuda_compiler_version }}
   run:
     - python
     - pytorch >=${{ pytorch }}
