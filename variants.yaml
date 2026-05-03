@@ -68,5 +68,8 @@ python:
 c_stdlib_version:
   - "2.28"
 
+c_stdlib:
+  - sysroot
+
 cuda_compiler:
   - cuda
