@@ -31,7 +31,6 @@ requirements:
     - ${{ compiler('c') }}
     - ${{ compiler('cxx') }}
     - ${{ compiler('cuda') }}
-    - ${{ stdlib('c') }}
   host:
     - python
     - pip
