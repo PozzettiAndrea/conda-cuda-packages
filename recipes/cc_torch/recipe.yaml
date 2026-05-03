@@ -19,7 +19,12 @@ build:
   number: 0
   script:
     content:
-      - 'pip install "torch==${{ pytorch }}" --index-url "https://download.pytorch.org/whl/cu${{ cuda_short }}" --no-deps --python-version ${{ python }} --platform manylinux_2_28_x86_64 --target $PREFIX/lib/python${{ python }}/site-packages --only-binary=:all:'
+      - |
+        PY_TAG="cp${{ python | replace('.', '') }}"
+        TORCH_WHL="torch-${{ pytorch }}%2Bcu${{ cuda_short }}-${PY_TAG}-${PY_TAG}-manylinux_2_28_x86_64.whl"
+        curl -fSL "https://download.pytorch.org/whl/cu${{ cuda_short }}/${TORCH_WHL}" -o /tmp/torch.whl
+        unzip -q /tmp/torch.whl -d $PREFIX/lib/python${{ python }}/site-packages/
+        rm /tmp/torch.whl
       - $PYTHON -m pip install . --no-deps --no-build-isolation -vv
     env:
       FORCE_CUDA: "1"
