@@ -20,7 +20,13 @@ build:
   number: 0
   script:
     content:
-      - 'pip install "torch==$PYTORCH_VER" --index-url "https://download.pytorch.org/whl/cu$CUDA_SHORT" --no-deps --no-cache-dir --target "$PREFIX/lib/python$PY_VER/site-packages" --platform manylinux_2_28_x86_64 --python-version "$PY_NODOT" --only-binary=":all:"'
+      - echo "=== DEBUG ENV ==="
+      - echo "PYTORCH_VER=$PYTORCH_VER CUDA_SHORT=$CUDA_SHORT PY_VER=$PY_VER PY_NODOT=$PY_NODOT"
+      - echo "PREFIX=$PREFIX"
+      - echo "PYTHON=$PYTHON"
+      - which pip
+      - pip --version
+      - 'pip install "torch==$PYTORCH_VER" --index-url "https://download.pytorch.org/whl/cu$CUDA_SHORT" --no-deps --no-cache-dir --target "$PREFIX/lib/python$PY_VER/site-packages" --platform manylinux_2_28_x86_64 --python-version "$PY_NODOT" --only-binary=":all:" -v'
       - $PYTHON -m pip install . --no-deps --no-build-isolation -vv
     env:
       FORCE_CUDA: "1"
