@@ -19,14 +19,10 @@ build:
   number: 0
   script:
     content:
-      - curl -sL "https://download.pytorch.org/whl/cu${CUDA_SHORT}/torch-${PYTORCH_VER}%2Bcu${CUDA_SHORT}-cp312-cp312-manylinux_2_28_x86_64.whl" -o /tmp/torch.whl
-      - unzip -q /tmp/torch.whl -d "$PREFIX/lib/python3.12/site-packages/"
       - $PYTHON -m pip install . --no-deps --no-build-isolation -vv
     env:
       FORCE_CUDA: "1"
       TORCH_CUDA_ARCH_LIST: ${{ arch_list }}
-      PYTORCH_VER: ${{ pytorch }}
-      CUDA_SHORT: ${{ cuda_short }}
 
 requirements:
   build:
@@ -37,20 +33,14 @@ requirements:
     - python
     - pip
     - setuptools
-    - typing_extensions
+    - pytorch
+    - pytorch =*=cuda*
     - cuda-nvcc ${{ cuda_compiler_version }}.*
     - cuda-cudart-dev ${{ cuda_compiler_version }}.*
     - cuda-cccl
-    - cudnn
-    - libcublas
-    - nccl
-    - libcusparse
-    - libcusolver
-    - libcufft
-    - libcusparselt
   run:
     - python
-    - pytorch >=${{ pytorch }}
+    - pytorch
     - __cuda
     - cuda-cudart
   run_constraints:
