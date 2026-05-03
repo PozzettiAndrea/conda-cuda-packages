@@ -18,13 +18,17 @@ build:
   string: cuda${{ cuda_compiler_version | replace('.', '') }}py${{ CONDA_PY }}h${{ PKG_HASH }}_${{ PKG_BUILDNUM }}
   script:
     content:
+      # Install pytorch from pip (matching CUDA version) before building
+      - pip install torch --index-url https://download.pytorch.org/whl/cu${{ cuda_compiler_version | replace('.', '') }}
       - ${{ PYTHON }} -m pip install . --no-deps --no-build-isolation -vv
     env:
       FORCE_CUDA: "1"
-      # Arch list depends on CUDA version — newer CUDA drops old arches, adds new ones
+      - if: ${{ cuda_compiler_version == "12.4" }}
+        then:
+          TORCH_CUDA_ARCH_LIST: "5.0;6.0;7.0;7.5;8.0;8.6;9.0+PTX"
       - if: ${{ cuda_compiler_version == "12.6" }}
         then:
-          TORCH_CUDA_ARCH_LIST: "7.0;7.5;8.0;8.6;9.0;10.0+PTX"
+          TORCH_CUDA_ARCH_LIST: "5.0;6.0;7.0;7.5;8.0;8.6;9.0;10.0+PTX"
       - if: ${{ cuda_compiler_version == "12.8" }}
         then:
           TORCH_CUDA_ARCH_LIST: "7.0;7.5;8.0;8.6;9.0;10.0;12.0+PTX"
@@ -48,14 +52,14 @@ requirements:
     - python
     - pip
     - setuptools
-    - pytorch
-    - pytorch =*=cuda*
     - cuda-version ${{ cuda_compiler_version }}
   run:
     - python
     - pytorch
     - __cuda
     - cuda-cudart
+  run_constrained:
+    - cuda-version >=${{ cuda_compiler_version }}
 
 tests:
   - python:

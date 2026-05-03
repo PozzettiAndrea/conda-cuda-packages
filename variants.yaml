@@ -1,4 +1,5 @@
 cuda_compiler_version:
+  - "12.4"
   - "12.6"
   - "12.8"
   - "12.9"
@@ -12,6 +13,3 @@ python:
 
 cuda_compiler:
   - cuda
-
-# Arch list per CUDA version (matched via zip_keys would be ideal,
-# but rattler-build uses if/else in the recipe instead)
