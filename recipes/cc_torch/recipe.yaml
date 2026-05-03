@@ -19,7 +19,7 @@ build:
   number: 0
   script:
     content:
-      - pip install torch==$PYTORCH_VER --index-url https://download.pytorch.org/whl/cu$CUDA_SHORT --extra-index-url https://pypi.org/simple --no-cache-dir
+      - pip install torch==$PYTORCH_VER --index-url https://download.pytorch.org/whl/cu$CUDA_SHORT --no-deps
       - $PYTHON -m pip install . --no-deps --no-build-isolation -vv
     env:
       FORCE_CUDA: "1"
