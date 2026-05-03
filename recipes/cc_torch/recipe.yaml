@@ -15,35 +15,29 @@ source:
 
 build:
   number: 0
-  string: cuda${{ cuda_compiler_version | replace('.', '') }}py${{ CONDA_PY }}h${{ PKG_HASH }}_${{ PKG_BUILDNUM }}
+  string: cuda${{ cuda_compiler_version | replace('.', '') }}_torch${{ pytorch | replace('.', '') }}_py${{ CONDA_PY }}_${{ PKG_BUILDNUM }}
   script:
     content:
-      - pip install torch --index-url https://download.pytorch.org/whl/cu${{ cuda_compiler_version | replace('.', '') }}
+      - pip install torch==${{ pytorch }} --index-url https://download.pytorch.org/whl/cu${{ cuda_compiler_version | replace('.', '') }}
       - ${{ PYTHON }} -m pip install . --no-deps --no-build-isolation -vv
     env:
       FORCE_CUDA: "1"
-      # Arch list: Linux supports all arches, Windows drops Pascal (sm_50/60)
-      # CUDA 12.4: include Pascal on Linux
       - if: ${{ cuda_compiler_version == "12.4" and linux }}
         then:
           TORCH_CUDA_ARCH_LIST: "5.0;6.0;7.0;8.0;9.0+PTX"
       - if: ${{ cuda_compiler_version == "12.4" and win }}
         then:
           TORCH_CUDA_ARCH_LIST: "7.0;8.0;9.0+PTX"
-      # CUDA 12.6: Volta+
       - if: ${{ cuda_compiler_version == "12.6" }}
         then:
           TORCH_CUDA_ARCH_LIST: "7.0;8.0;9.0+PTX"
-      # CUDA 12.8/12.9: add Blackwell
       - if: ${{ cuda_compiler_version == "12.8" or cuda_compiler_version == "12.9" }}
         then:
           TORCH_CUDA_ARCH_LIST: "7.0;8.0;9.0;10.0;12.0+PTX"
-      # CUDA 13.0: drops Volta (sm_70)
       - if: ${{ cuda_compiler_version == "13.0" }}
         then:
           TORCH_CUDA_ARCH_LIST: "8.0;9.0;10.0;12.0+PTX"
   missing_dso_whitelist:
-    # These come from pytorch at runtime, not bundled in our package
     - "*/libc10*"
     - "*/libtorch*"
     - "*/libtorch_cpu*"
@@ -63,7 +57,7 @@ requirements:
     - cuda-version ${{ cuda_compiler_version }}
   run:
     - python
-    - pytorch
+    - pytorch >=${{ pytorch }}
     - __cuda
     - cuda-cudart
   run_constrained:
