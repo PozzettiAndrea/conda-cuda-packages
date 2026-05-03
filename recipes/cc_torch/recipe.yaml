@@ -40,6 +40,7 @@ requirements:
     - python
     - pip
     - setuptools
+    - typing_extensions
     - cuda-nvcc ${{ cuda_compiler_version }}.*
     - cuda-cudart-dev ${{ cuda_compiler_version }}.*
     - cuda-cccl
