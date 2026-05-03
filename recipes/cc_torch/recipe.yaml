@@ -19,6 +19,7 @@ build:
   number: 0
   script:
     content:
+      - pip install "torch==${{ pytorch }}" --index-url "https://download.pytorch.org/whl/cu${{ cuda_short }}" --no-deps
       - $PYTHON -m pip install . --no-deps --no-build-isolation -vv
     env:
       FORCE_CUDA: "1"
@@ -34,18 +35,16 @@ requirements:
     - python
     - pip
     - setuptools
-    - pytorch
-    - cuda-version ${{ cuda_compiler_version }}.*
     - cuda-nvcc ${{ cuda_compiler_version }}.*
     - cuda-cudart-dev ${{ cuda_compiler_version }}.*
     - cuda-cccl
   run:
     - python
-    - pytorch
     - __cuda
     - cuda-cudart
   run_constraints:
     - cuda-version >=${{ cuda_compiler_version }}
+    - pytorch >=${{ pytorch }}
 
 tests:
   - python:
