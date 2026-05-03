@@ -25,12 +25,6 @@ build:
     env:
       FORCE_CUDA: "1"
       TORCH_CUDA_ARCH_LIST: ${{ arch_list }}
-  missing_dso_whitelist:
-    - "*/libc10*"
-    - "*/libtorch*"
-    - "*/libtorch_cpu*"
-    - "*/libtorch_cuda*"
-    - "*/libtorch_python*"
 
 requirements:
   build:
