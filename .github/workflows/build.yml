@@ -14,26 +14,22 @@ on:
       cuda:
         description: 'CUDA version (or "all")'
         required: false
-        default: 'all'
+        default: '12.8'
         type: string
       python:
         description: 'Python version (or "all")'
         required: false
-        default: 'all'
+        default: '3.12'
+        type: string
+      pytorch:
+        description: 'PyTorch version (or "all")'
+        required: false
+        default: '2.11.0'
         type: string
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          # For now, manual single build for testing
-          - package: ${{ inputs.package }}
-            cuda: "12.8"
-            python: "3.12"
-
     steps:
       - uses: actions/checkout@v4
 
@@ -45,11 +41,24 @@ jobs:
 
       - name: Build package
         run: |
+          VARIANT_ARGS=""
+          if [ "${{ inputs.cuda }}" != "all" ]; then
+            VARIANT_ARGS="$VARIANT_ARGS --variant cuda_compiler_version=${{ inputs.cuda }}"
+          fi
+          if [ "${{ inputs.python }}" != "all" ]; then
+            VARIANT_ARGS="$VARIANT_ARGS --variant python=${{ inputs.python }}"
+          fi
+          if [ "${{ inputs.pytorch }}" != "all" ]; then
+            VARIANT_ARGS="$VARIANT_ARGS --variant pytorch=${{ inputs.pytorch }}"
+          fi
+
           rattler-build build \
-            --recipe recipes/${{ matrix.package }}/recipe.yaml \
+            --recipe recipes/${{ inputs.package }}/recipe.yaml \
             --variant-config variants.yaml \
             --channel conda-forge \
+            --channel nvidia \
             --channel pytorch \
+            $VARIANT_ARGS \
             2>&1 | tee build.log
 
       - name: Upload to anaconda.org
@@ -65,5 +74,5 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.package }}-cuda${{ matrix.cuda }}-py${{ matrix.python }}
+          name: ${{ inputs.package }}-cuda${{ inputs.cuda }}-py${{ inputs.python }}-torch${{ inputs.pytorch }}
           path: output/**/*.conda
