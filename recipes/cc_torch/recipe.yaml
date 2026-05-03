@@ -19,10 +19,7 @@ build:
   number: 0
   script:
     content:
-      - $PYTHON -c "import pip._internal.utils.compatibility_tags as t; print([str(x) for x in t.get_supported()[:5]])"
-      - $PYTHON -c "import struct; print('bits:', struct.calcsize('P') * 8)"
-      - pip debug --verbose 2>&1 | head -30
-      - pip install "torch==$PYTORCH_VER" --index-url "https://download.pytorch.org/whl/cu$CUDA_SHORT" --no-deps -v 2>&1 | tail -20
+      - 'pip install "torch==$PYTORCH_VER" --index-url "https://download.pytorch.org/whl/cu$CUDA_SHORT" --no-deps --platform manylinux_2_28_x86_64 --only-binary=":all:" --target="$PREFIX/lib/python3.12/site-packages"'
       - $PYTHON -m pip install . --no-deps --no-build-isolation -vv
     env:
       FORCE_CUDA: "1"
