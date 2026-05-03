@@ -1,0 +1,67 @@
+name: Build Conda Packages
+
+on:
+  workflow_dispatch:
+    inputs:
+      package:
+        description: 'Package to build'
+        required: true
+        type: choice
+        options:
+          - all
+          - cc_torch
+          - torch_generic_nms
+      cuda:
+        description: 'CUDA version (or "all")'
+        required: false
+        default: 'all'
+        type: string
+      python:
+        description: 'Python version (or "all")'
+        required: false
+        default: 'all'
+        type: string
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # This gets expanded by the generate-matrix step
+          # For now, manual single build for testing
+          - package: ${{ inputs.package }}
+            cuda: "12.8"
+            python: "3.12"
+    
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install rattler-build
+        run: |
+          curl -fsSL https://github.com/prefix-dev/rattler-build/releases/latest/download/rattler-build-x86_64-unknown-linux-musl.tar.bz2 \
+            | tar xj -C /usr/local/bin/
+
+      - name: Build package
+        run: |
+          rattler-build build \
+            --recipe recipes/${{ matrix.package }}/recipe.yaml \
+            --variant-config variants.yaml \
+            --channel conda-forge \
+            --channel pytorch \
+            2>&1 | tee build.log
+
+      - name: Upload to anaconda.org
+        env:
+          ANACONDA_TOKEN: ${{ secrets.ANACONDA_TOKEN }}
+        run: |
+          pip install anaconda-client
+          find output/ -name "*.conda" -exec \
+            anaconda -t $ANACONDA_TOKEN upload --user pozzettiandrea --force {} \;
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.package }}-cuda${{ matrix.cuda }}-py${{ matrix.python }}
+          path: output/**/*.conda

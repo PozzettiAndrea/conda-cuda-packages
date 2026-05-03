@@ -1,0 +1,54 @@
+context:
+  name: cc_torch
+  version: "0.1.0"
+  source_repo: "ronghanghu/cc_torch"
+
+package:
+  name: ${{ name }}
+  version: ${{ version }}
+
+source:
+  git: https://github.com/${{ source_repo }}.git
+  depth: 1
+
+build:
+  number: 0
+  string: cuda${{ cuda_compiler_version | replace('.', '') }}py${{ CONDA_PY }}h${{ PKG_HASH }}_${{ PKG_BUILDNUM }}
+  script:
+    content:
+      - ${{ PYTHON }} -m pip install . --no-deps --no-build-isolation -vv
+    env:
+      FORCE_CUDA: "1"
+      TORCH_CUDA_ARCH_LIST: "7.0;7.5;8.0;8.6;9.0;10.0;12.0+PTX"
+  missing_dso_whitelist:
+    - "*/libc10*"
+    - "*/libtorch*"
+
+requirements:
+  build:
+    - ${{ compiler('c') }}
+    - ${{ compiler('cxx') }}
+    - ${{ compiler('cuda') }}
+    - ${{ stdlib('c') }}
+  host:
+    - python
+    - pip
+    - setuptools
+    - pytorch
+    - pytorch =*=cuda*
+    - cuda-version ${{ cuda_compiler_version }}
+  run:
+    - python
+    - pytorch
+    - __cuda
+    - cuda-cudart
+
+tests:
+  - python:
+      imports:
+        - cc_torch
+
+about:
+  homepage: https://github.com/ronghanghu/cc_torch
+  license: MIT
+  summary: Connected Components for PyTorch (CUDA)

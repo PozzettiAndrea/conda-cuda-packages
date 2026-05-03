@@ -1,0 +1,5 @@
+output/
+build/
+.rattler/
+*.conda
+*.tar.bz2
