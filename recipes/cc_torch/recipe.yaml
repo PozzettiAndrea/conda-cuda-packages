@@ -3,7 +3,6 @@ context:
   version: "0.1.0"
   source_repo: "ronghanghu/cc_torch"
   commit: "446e9360ed10d3c8d03925ccb5f220ccb62009de"
-  # Arch list based on CUDA version
   arch_list: ${{ "8.0;9.0;10.0;12.0+PTX" if cuda_compiler_version == "13.0" else ("7.0;8.0;9.0;10.0;12.0+PTX" if cuda_compiler_version in ("12.8", "12.9") else ("5.0;6.0;7.0;8.0;9.0+PTX" if cuda_compiler_version == "12.4" else "7.0;8.0;9.0+PTX")) }}
 
 package:
@@ -29,19 +28,18 @@ requirements:
   build:
     - ${{ compiler('c') }}
     - ${{ compiler('cxx') }}
-    - ${{ compiler('cuda') }}
   host:
     - python
     - pip
     - setuptools
-    - cuda-version ==${{ cuda_compiler_version }}
+    - cuda-nvcc ${{ cuda_compiler_version }}.*
+    - cuda-cudart-dev ${{ cuda_compiler_version }}.*
+    - cuda-cccl
   run:
     - python
     - pytorch >=${{ pytorch }}
     - __cuda
     - cuda-cudart
-  run_constraints:
-    - cuda-version >=${{ cuda_compiler_version }}
 
 tests:
   - python:
