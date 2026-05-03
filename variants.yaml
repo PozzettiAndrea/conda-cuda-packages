@@ -1,6 +1,3 @@
-# Build matrix: CUDA × Python
-# PyTorch version is determined by conda-forge's pytorch package matching cuda-version
-
 cuda_compiler_version:
   - "12.6"
   - "12.8"
@@ -13,6 +10,8 @@ python:
   - "3.12"
   - "3.13"
 
-# Ensure we don't build cpu variants
 cuda_compiler:
   - cuda
+
+# Arch list per CUDA version (matched via zip_keys would be ideal,
+# but rattler-build uses if/else in the recipe instead)
