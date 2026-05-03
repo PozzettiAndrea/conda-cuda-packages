@@ -34,7 +34,6 @@ requirements:
     - pip
     - setuptools
     - pytorch
-    - pytorch =*=cuda*
     - cuda-nvcc ${{ cuda_compiler_version }}.*
     - cuda-cudart-dev ${{ cuda_compiler_version }}.*
     - cuda-cccl
