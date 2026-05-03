@@ -19,7 +19,7 @@ build:
   number: 0
   script:
     content:
-      - pip install "torch==${{ pytorch }}" --index-url "https://download.pytorch.org/whl/cu${{ cuda_short }}" --no-deps --python-version ${{ python }} --platform manylinux_2_28_x86_64 --target $PREFIX/lib/python${{ python }}/site-packages --only-binary :all:
+      - 'pip install "torch==${{ pytorch }}" --index-url "https://download.pytorch.org/whl/cu${{ cuda_short }}" --no-deps --python-version ${{ python }} --platform manylinux_2_28_x86_64 --target $PREFIX/lib/python${{ python }}/site-packages --only-binary=:all:'
       - $PYTHON -m pip install . --no-deps --no-build-isolation -vv
     env:
       FORCE_CUDA: "1"
