@@ -29,19 +29,19 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # This gets expanded by the generate-matrix step
           # For now, manual single build for testing
           - package: ${{ inputs.package }}
             cuda: "12.8"
             python: "3.12"
-    
+
     steps:
       - uses: actions/checkout@v4
 
       - name: Install rattler-build
         run: |
-          curl -fsSL https://github.com/prefix-dev/rattler-build/releases/latest/download/rattler-build-x86_64-unknown-linux-musl.tar.bz2 \
-            | tar xj -C /usr/local/bin/
+          curl -fsSL https://github.com/prefix-dev/rattler-build/releases/latest/download/rattler-build-x86_64-unknown-linux-musl.tar.gz \
+            | tar xz -C /usr/local/bin/
+          rattler-build --version
 
       - name: Build package
         run: |
@@ -53,6 +53,7 @@ jobs:
             2>&1 | tee build.log
 
       - name: Upload to anaconda.org
+        if: success()
         env:
           ANACONDA_TOKEN: ${{ secrets.ANACONDA_TOKEN }}
         run: |
@@ -61,6 +62,7 @@ jobs:
             anaconda -t $ANACONDA_TOKEN upload --user pozzettiandrea --force {} \;
 
       - name: Upload artifact
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.package }}-cuda${{ matrix.cuda }}-py${{ matrix.python }}
