@@ -4,6 +4,7 @@ context:
   source_repo: "ronghanghu/cc_torch"
   commit: "446e9360ed10d3c8d03925ccb5f220ccb62009de"
   arch_list: ${{ "8.0;9.0;10.0;12.0+PTX" if cuda_compiler_version == "13.0" else ("7.0;8.0;9.0;10.0;12.0+PTX" if cuda_compiler_version in ("12.8", "12.9") else ("5.0;6.0;7.0;8.0;9.0+PTX" if cuda_compiler_version == "12.4" else "7.0;8.0;9.0+PTX")) }}
+  cuda_short: ${{ cuda_compiler_version | replace('.', '') }}
 
 package:
   name: ${{ name }}
@@ -18,11 +19,13 @@ build:
   number: 0
   script:
     content:
-      - pip install torch==${{ pytorch }} --index-url https://download.pytorch.org/whl/cu${{ cuda_compiler_version | replace('.', '') }}
-      - ${{ PYTHON }} -m pip install . --no-deps --no-build-isolation -vv
+      - pip install torch==$PYTORCH_VER --index-url https://download.pytorch.org/whl/cu$CUDA_SHORT
+      - $PYTHON -m pip install . --no-deps --no-build-isolation -vv
     env:
       FORCE_CUDA: "1"
       TORCH_CUDA_ARCH_LIST: ${{ arch_list }}
+      PYTORCH_VER: ${{ pytorch }}
+      CUDA_SHORT: ${{ cuda_short }}
 
 requirements:
   build:
@@ -40,6 +43,8 @@ requirements:
     - pytorch >=${{ pytorch }}
     - __cuda
     - cuda-cudart
+  run_constraints:
+    - cuda-version >=${{ cuda_compiler_version }}
 
 tests:
   - python:
