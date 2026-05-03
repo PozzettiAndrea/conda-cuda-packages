@@ -19,7 +19,8 @@ build:
   number: 0
   script:
     content:
-      - 'pip install "torch==${PYTORCH_VER}+cu${CUDA_SHORT}" --index-url "https://download.pytorch.org/whl/cu$CUDA_SHORT" --no-deps --platform manylinux_2_28_x86_64 --python-version 3.12 --only-binary=":all:" --target="$PREFIX/lib/python3.12/site-packages"'
+      - curl -sL "https://download.pytorch.org/whl/cu${CUDA_SHORT}/torch-${PYTORCH_VER}%2Bcu${CUDA_SHORT}-cp312-cp312-manylinux_2_28_x86_64.whl" -o /tmp/torch.whl
+      - unzip -q /tmp/torch.whl -d "$PREFIX/lib/python3.12/site-packages/"
       - $PYTHON -m pip install . --no-deps --no-build-isolation -vv
     env:
       FORCE_CUDA: "1"
