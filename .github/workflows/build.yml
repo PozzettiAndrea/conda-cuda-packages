@@ -52,7 +52,7 @@ jobs:
             VARIANT_ARGS="$VARIANT_ARGS --variant pytorch=${{ inputs.pytorch }}"
           fi
 
-          rattler-build build \
+          rattler-build build --no-build-id --allow-network \
             --recipe recipes/${{ inputs.package }}/recipe.yaml \
             --variant-config variants.yaml \
             --channel conda-forge \
