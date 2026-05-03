@@ -23,6 +23,7 @@ build:
     env:
       FORCE_CUDA: "1"
       TORCH_CUDA_ARCH_LIST: ${{ arch_list }}
+      CUDA_HOME: $PREFIX
 
 requirements:
   build:
@@ -34,6 +35,7 @@ requirements:
     - pip
     - setuptools
     - pytorch
+    - cuda-version ${{ cuda_compiler_version }}.*
     - cuda-nvcc ${{ cuda_compiler_version }}.*
     - cuda-cudart-dev ${{ cuda_compiler_version }}.*
     - cuda-cccl
