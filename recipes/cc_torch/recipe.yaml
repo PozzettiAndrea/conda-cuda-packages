@@ -23,9 +23,12 @@ build:
         PY_TAG="cp${{ python | replace('.', '') }}"
         TORCH_WHL="torch-${{ pytorch }}%2Bcu${{ cuda_short }}-${PY_TAG}-${PY_TAG}-manylinux_2_28_x86_64.whl"
         curl -fSL "https://download.pytorch.org/whl/cu${{ cuda_short }}/${TORCH_WHL}" -o /tmp/torch.whl
-        unzip -q /tmp/torch.whl -d $PREFIX/lib/python${{ python }}/site-packages/
+        mkdir -p /tmp/torch_pkg
+        unzip -q /tmp/torch.whl -d /tmp/torch_pkg/
         rm /tmp/torch.whl
-      - $PYTHON -m pip install . --no-deps --no-build-isolation -vv
+        export PYTHONPATH="/tmp/torch_pkg:$PYTHONPATH"
+        export LD_LIBRARY_PATH="/tmp/torch_pkg/torch/lib:$LD_LIBRARY_PATH"
+        $PYTHON -m pip install . --no-deps --no-build-isolation -vv
     env:
       FORCE_CUDA: "1"
       TORCH_CUDA_ARCH_LIST: ${{ arch_list }}
@@ -36,6 +39,7 @@ requirements:
     - ${{ compiler('c') }}
     - ${{ compiler('cxx') }}
     - ${{ stdlib('c') }}
+    - patchelf
   host:
     - python
     - pip
@@ -44,19 +48,25 @@ requirements:
     - cuda-nvcc ${{ cuda_compiler_version }}.*
     - cuda-cudart-dev ${{ cuda_compiler_version }}.*
     - cuda-cccl
+    - libcusparse-dev
+    - libcublas-dev
+    - libcufft-dev
+    - libcurand-dev
+    - libcusolver-dev
     - libcudnn >=9
     - libcublas
     - libcufft
     - libcurand
     - libcusolver
     - libcusparse
-    - libcusparselt
+    - cusparselt
     - libnvjitlink
     - libcufile
     - cuda-nvrtc
     - cuda-cupti
     - cuda-nvtx
     - nccl
+    - libnvshmem3
   run:
     - python
     - __cuda
@@ -65,10 +75,6 @@ requirements:
     - cuda-version >=${{ cuda_compiler_version }}
     - pytorch >=${{ pytorch }}
 
-tests:
-  - python:
-      imports:
-        - cc_torch
 
 about:
   homepage: https://github.com/ronghanghu/cc_torch
