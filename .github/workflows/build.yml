@@ -68,7 +68,7 @@ jobs:
         run: |
           pip install anaconda-client
           find output/ -name "*.conda" -exec \
-            anaconda -t $ANACONDA_TOKEN upload --user pozzettiandrea --force {} \;
+            anaconda -t $ANACONDA_TOKEN upload --force {} \;
 
       - name: Upload artifact
         if: always()
