@@ -4,6 +4,7 @@
 import argparse
 import json
 import os
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -49,6 +50,50 @@ def get_packages(package_input: str) -> list[str]:
     if package_input == "all":
         return [p.stem for p in packages_dir.glob("*.yml")]
     return [package_input]
+
+
+_PYPI_PATCH_CACHE: dict = {}
+
+
+def resolve_pytorch_full_version(pytorch_minor: str, cuda: str, python: str, platform: str) -> str | None:
+    """Find the latest pip torch wheel matching this (minor, cuda, python, platform).
+
+    Returns the full version (e.g. '2.10.4') or None if no matching wheel exists
+    on download.pytorch.org. The full version is needed by the build script to
+    construct the wheel download URL; the minor goes into the runtime dep.
+    """
+    cuda_short = cuda.replace(".", "")
+    py_tag = f"cp{python.replace('.', '')}"
+    cache_key = (pytorch_minor, cuda_short, py_tag, platform)
+    if cache_key in _PYPI_PATCH_CACHE:
+        return _PYPI_PATCH_CACHE[cache_key]
+
+    plat_re = "(?:manylinux_2_28_x86_64|linux_x86_64)" if platform == "linux" else "win_amd64"
+    pattern = re.compile(
+        rf"torch-({re.escape(pytorch_minor)}\.\d+(?:\.post\d+)?)\+cu{cuda_short}-{py_tag}-{py_tag}-{plat_re}\.whl"
+    )
+
+    url = f"https://download.pytorch.org/whl/cu{cuda_short}/torch/"
+    try:
+        result = subprocess.run(
+            ["curl", "-sf", url], capture_output=True, text=True, timeout=15
+        )
+        if result.returncode != 0:
+            _PYPI_PATCH_CACHE[cache_key] = None
+            return None
+        candidates = sorted(set(pattern.findall(result.stdout)), key=_version_key, reverse=True)
+        full = candidates[0] if candidates else None
+    except (subprocess.TimeoutExpired, Exception):
+        full = None
+
+    _PYPI_PATCH_CACHE[cache_key] = full
+    return full
+
+
+def _version_key(v: str):
+    """Sort key for version strings like '2.10.4' or '2.10.0.post1'."""
+    parts = v.replace(".post", ".").split(".")
+    return tuple(int(p) if p.isdigit() else 0 for p in parts)
 
 
 def check_existing(channel: str, package: str, version: str, build_string_prefix: str) -> bool:
@@ -113,6 +158,21 @@ def main():
             combos = [c for c in combos if c["platform"] == args.platform]
 
         for combo in combos:
+            # Resolve the latest matching pip torch patch for this (cuda, python, platform).
+            # The build script needs the full version (e.g. 2.10.4) to construct the wheel
+            # download URL; the runtime dep uses the minor (combo['pytorch']) for the
+            # `pytorch X.Y.*` matchspec.
+            pytorch_full = resolve_pytorch_full_version(
+                combo["pytorch"], combo["cuda"], combo["python"], combo["platform"]
+            )
+            if pytorch_full is None:
+                print(
+                    f"  SKIP {package} cu{combo['cuda']}/py{combo['python']}/torch{combo['pytorch']}/{combo['platform']} "
+                    f"(no matching pip torch wheel on download.pytorch.org)",
+                    file=sys.stderr,
+                )
+                continue
+
             build_prefix = f"cu{combo['cuda']}_torch{combo['pytorch']}_py{combo['python']}_{combo['subdir']}"
 
             if not args.overwrite:
@@ -125,6 +185,7 @@ def main():
                 "cuda": combo["cuda"],
                 "python": combo["python"],
                 "pytorch": combo["pytorch"],
+                "pytorch_full": pytorch_full,
                 "platform": combo["platform"],
                 "runner": combo["runner"],
                 "subdir": combo["subdir"],

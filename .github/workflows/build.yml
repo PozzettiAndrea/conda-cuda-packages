@@ -25,7 +25,7 @@ on:
         default: 'all'
         type: string
       pytorch:
-        description: 'PyTorch version filter (or "all")'
+        description: 'PyTorch minor version filter, e.g. "2.10" (or "all"). Full patch is auto-resolved from PyPI by generate_matrix.py.'
         required: false
         default: 'all'
         type: string
@@ -159,6 +159,7 @@ jobs:
             --variant cuda_compiler_version=${{ matrix.cuda }} \
             --variant python=${{ matrix.python }} \
             --variant pytorch=${{ matrix.pytorch }} \
+            --variant pytorch_full=${{ matrix.pytorch_full }} \
             --variant c_compiler_version=13 \
             --variant cxx_compiler_version=13 \
             2>&1 | tee build.log
@@ -176,6 +177,7 @@ jobs:
             --variant cuda_compiler_version=${{ matrix.cuda }} `
             --variant python=${{ matrix.python }} `
             --variant pytorch=${{ matrix.pytorch }} `
+            --variant pytorch_full=${{ matrix.pytorch_full }} `
             2>&1 | Tee-Object -FilePath build.log
 
       - name: Upload to anaconda.org (Linux)

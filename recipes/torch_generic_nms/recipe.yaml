@@ -23,7 +23,7 @@ build:
       - if: unix
         then: |
           PY_TAG="cp${{ python | replace('.', '') }}"
-          BASE="torch-${{ pytorch }}%2Bcu${{ cuda_short }}-${PY_TAG}-${PY_TAG}"
+          BASE="torch-${{ pytorch_full }}%2Bcu${{ cuda_short }}-${PY_TAG}-${PY_TAG}"
           URL="https://download.pytorch.org/whl/cu${{ cuda_short }}"
           curl -fSL "${URL}/${BASE}-manylinux_2_28_x86_64.whl" -o /tmp/torch.whl 2>/dev/null || \
           curl -fSL "${URL}/${BASE}-linux_x86_64.whl" -o /tmp/torch.whl
@@ -91,7 +91,7 @@ build:
           exit $PIP_RC
         else: |
           set PY_TAG=cp${{ python | replace('.', '') }}
-          set BASE=torch-${{ pytorch }}%%2Bcu${{ cuda_short }}-%PY_TAG%-%PY_TAG%
+          set BASE=torch-${{ pytorch_full }}%%2Bcu${{ cuda_short }}-%PY_TAG%-%PY_TAG%
           set URL=https://download.pytorch.org/whl/cu${{ cuda_short }}
           curl -fSL "%URL%/%BASE%-win_amd64.whl" -o %TEMP%\torch.whl
           python -m zipfile -e %TEMP%\torch.whl %TEMP%\torch_pkg
@@ -148,7 +148,7 @@ requirements:
     # torch_generic_nms build whose torch ABI matches whatever pytorch lands in
     # the env. Replaces the previous loose `run_constraints: pytorch >=X`,
     # which conda silently ignored when pytorch came from pip instead of conda.
-    - pytorch =${{ pytorch }}.*
+    - pytorch ${{ pytorch }}.*
 
 
 about:
