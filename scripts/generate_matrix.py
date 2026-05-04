@@ -17,16 +17,29 @@ def load_package_config(package: str) -> dict:
         return yaml.safe_load(f)
 
 
+PLATFORM_MAP = {
+    "linux": {"runner": "ubuntu-latest", "subdir": "linux-64"},
+    "windows": {"runner": "windows-latest", "subdir": "win-64"},
+}
+
+
 def get_combinations(config: dict) -> list[dict]:
-    """Expand package config into list of {cuda, pytorch, python} combos."""
+    """Expand package config into list of {cuda, pytorch, python, platform} combos."""
+    platforms = config.get("build_matrix", {}).get("platforms", ["linux"])
     combos = []
     for entry in config["build_matrix"]["combinations"]:
         for py in entry["python_versions"]:
-            combos.append({
-                "cuda": entry["cuda"],
-                "pytorch": entry["pytorch"],
-                "python": py,
-            })
+            for platform in platforms:
+                if platform not in PLATFORM_MAP:
+                    continue
+                combos.append({
+                    "cuda": entry["cuda"],
+                    "pytorch": entry["pytorch"],
+                    "python": py,
+                    "platform": platform,
+                    "runner": PLATFORM_MAP[platform]["runner"],
+                    "subdir": PLATFORM_MAP[platform]["subdir"],
+                })
     return combos
 
 
@@ -76,6 +89,7 @@ def main():
     parser.add_argument("--cuda", default="all")
     parser.add_argument("--python", default="all")
     parser.add_argument("--pytorch", default="all")
+    parser.add_argument("--platform", default="all")
     parser.add_argument("--overwrite", action="store_true")
     parser.add_argument("--channel", default="pozzettiandrea")
     args = parser.parse_args()
@@ -95,10 +109,11 @@ def main():
             combos = [c for c in combos if c["python"] == args.python]
         if args.pytorch != "all":
             combos = [c for c in combos if c["pytorch"] == args.pytorch]
+        if args.platform != "all":
+            combos = [c for c in combos if c["platform"] == args.platform]
 
         for combo in combos:
-            cuda_short = combo["cuda"].replace(".", "")
-            build_prefix = f"cu{combo['cuda']}_torch{combo['pytorch']}_py{combo['python']}"
+            build_prefix = f"cu{combo['cuda']}_torch{combo['pytorch']}_py{combo['python']}_{combo['subdir']}"
 
             if not args.overwrite:
                 if check_existing(args.channel, package, version, build_prefix):
@@ -110,6 +125,9 @@ def main():
                 "cuda": combo["cuda"],
                 "python": combo["python"],
                 "pytorch": combo["pytorch"],
+                "platform": combo["platform"],
+                "runner": combo["runner"],
+                "subdir": combo["subdir"],
             })
 
     print(f"  {len(matrix)} builds in matrix", file=sys.stderr)

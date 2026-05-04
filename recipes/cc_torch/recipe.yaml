@@ -19,8 +19,8 @@ build:
   number: 0
   string: "cu${{ cuda_compiler_version }}_torch${{ pytorch }}_py${{ python }}_${{ target_platform }}"
   script:
-    content:
-      - |
+    - if: unix
+      then: |
         PY_TAG="cp${{ python | replace('.', '') }}"
         BASE="torch-${{ pytorch }}%2Bcu${{ cuda_short }}-${PY_TAG}-${PY_TAG}"
         URL="https://download.pytorch.org/whl/cu${{ cuda_short }}"
@@ -32,6 +32,16 @@ build:
         export PYTHONPATH="/tmp/torch_pkg:$PYTHONPATH"
         export LD_LIBRARY_PATH="/tmp/torch_pkg/torch/lib:$LD_LIBRARY_PATH"
         $PYTHON -m pip install . --no-deps --no-build-isolation -vv
+      else: |
+        set PY_TAG=cp${{ python | replace('.', '') }}
+        set BASE=torch-${{ pytorch }}%%2Bcu${{ cuda_short }}-%PY_TAG%-%PY_TAG%
+        set URL=https://download.pytorch.org/whl/cu${{ cuda_short }}
+        curl -fSL "%URL%/%BASE%-win_amd64.whl" -o %TEMP%\torch.whl
+        python -m zipfile -e %TEMP%\torch.whl %TEMP%\torch_pkg
+        del %TEMP%\torch.whl
+        set "PYTHONPATH=%TEMP%\torch_pkg;%PYTHONPATH%"
+        set "PATH=%TEMP%\torch_pkg\torch\lib;%PATH%"
+        %PYTHON% -m pip install . --no-deps --no-build-isolation -vv
     env:
       FORCE_CUDA: "1"
       TORCH_CUDA_ARCH_LIST: ${{ arch_list }}
@@ -42,7 +52,8 @@ requirements:
     - ${{ compiler('c') }}
     - ${{ compiler('cxx') }}
     - ${{ stdlib('c') }}
-    - patchelf
+    - if: linux
+      then: patchelf
   host:
     - python
     - pip
@@ -64,12 +75,14 @@ requirements:
     - libcusparse
     - cusparselt
     - libnvjitlink
-    - libcufile
+    - if: linux
+      then:
+        - libcufile
+        - nccl
+        - libnvshmem3
     - cuda-nvrtc
     - cuda-cupti
     - cuda-nvtx
-    - nccl
-    - libnvshmem3
   run:
     - python
     - __cuda

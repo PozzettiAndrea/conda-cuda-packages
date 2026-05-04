@@ -27,6 +27,11 @@ on:
         required: false
         default: 'all'
         type: string
+      platform:
+        description: 'Platform filter (linux, windows, or "all")'
+        required: false
+        default: 'all'
+        type: string
       overwrite:
         description: 'Rebuild even if package already exists'
         required: false
@@ -45,33 +50,47 @@ jobs:
         id: matrix
         run: |
           python3 scripts/generate_matrix.py \
-            --variants variants.yaml \
             --package "${{ inputs.package }}" \
             --cuda "${{ inputs.cuda }}" \
             --python "${{ inputs.python }}" \
             --pytorch "${{ inputs.pytorch }}" \
+            --platform "${{ inputs.platform }}" \
             ${{ inputs.overwrite && '--overwrite' || '' }} \
             --channel pozzettiandrea
 
   build:
     needs: generate-matrix
     if: ${{ needs.generate-matrix.outputs.matrix != '[]' && needs.generate-matrix.outputs.matrix != '' }}
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.runner }}
     strategy:
       fail-fast: false
       matrix:
         include: ${{ fromJson(needs.generate-matrix.outputs.matrix) }}
-    name: "${{ matrix.package }} | cu${{ matrix.cuda }} | py${{ matrix.python }} | torch${{ matrix.pytorch }}"
+    name: "${{ matrix.package }} | ${{ matrix.platform }} | cu${{ matrix.cuda }} | py${{ matrix.python }} | torch${{ matrix.pytorch }}"
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install rattler-build
+      # Linux: install rattler-build
+      - name: Install rattler-build (Linux)
+        if: matrix.platform == 'linux'
         run: |
           curl -fsSL https://github.com/prefix-dev/rattler-build/releases/latest/download/rattler-build-x86_64-unknown-linux-musl.tar.gz \
             | tar xz -C /usr/local/bin/ --strip-components=1
           rattler-build --version
 
-      - name: Build package
+      # Windows: install rattler-build
+      - name: Install rattler-build (Windows)
+        if: matrix.platform == 'windows'
+        shell: pwsh
+        run: |
+          $url = "https://github.com/prefix-dev/rattler-build/releases/latest/download/rattler-build-x86_64-pc-windows-msvc.zip"
+          Invoke-WebRequest -Uri $url -OutFile rattler-build.zip
+          Expand-Archive -Path rattler-build.zip -DestinationPath "$env:USERPROFILE\.local\bin" -Force
+          echo "$env:USERPROFILE\.local\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+          rattler-build --version
+
+      - name: Build package (Linux)
+        if: matrix.platform == 'linux'
         run: |
           rattler-build build --no-build-id --allow-network --no-test \
             --recipe recipes/${{ matrix.package }}/recipe.yaml \
@@ -84,18 +103,41 @@ jobs:
             --variant pytorch=${{ matrix.pytorch }} \
             2>&1 | tee build.log
 
-      - name: Upload to anaconda.org
-        if: success()
+      - name: Build package (Windows)
+        if: matrix.platform == 'windows'
+        shell: pwsh
+        run: |
+          rattler-build build --no-build-id --allow-network --no-test `
+            --recipe recipes/${{ matrix.package }}/recipe.yaml `
+            --variant-config variants.yaml `
+            --channel conda-forge `
+            --channel nvidia `
+            --channel pytorch `
+            --variant cuda_compiler_version=${{ matrix.cuda }} `
+            --variant python=${{ matrix.python }} `
+            --variant pytorch=${{ matrix.pytorch }} `
+            2>&1 | Tee-Object -FilePath build.log
+
+      - name: Upload to anaconda.org (Linux)
+        if: success() && matrix.platform == 'linux'
         env:
           ANACONDA_API_TOKEN: ${{ secrets.ANACONDA_TOKEN }}
         run: |
           pip install "anaconda-client<1.14"
-          find output/ -name "*.conda" -exec \
-            anaconda upload --force {} \;
+          find output/ -name "*.conda" -exec anaconda upload --force {} \;
+
+      - name: Upload to anaconda.org (Windows)
+        if: success() && matrix.platform == 'windows'
+        env:
+          ANACONDA_API_TOKEN: ${{ secrets.ANACONDA_TOKEN }}
+        shell: pwsh
+        run: |
+          pip install "anaconda-client<1.14"
+          Get-ChildItem -Recurse -Filter "*.conda" output/ | ForEach-Object { anaconda upload --force $_.FullName }
 
       - name: Upload artifact
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.package }}-cu${{ matrix.cuda }}-py${{ matrix.python }}-torch${{ matrix.pytorch }}
+          name: ${{ matrix.package }}-${{ matrix.platform }}-cu${{ matrix.cuda }}-py${{ matrix.python }}-torch${{ matrix.pytorch }}
           path: output/**/*.conda
