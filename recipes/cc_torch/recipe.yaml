@@ -94,7 +94,7 @@ requirements:
     # Replaces the previous loose `run_constraints: pytorch >=X`, which was a
     # soft pin that conda silently ignored when pytorch came from pip instead
     # of conda — leading to ABI-mismatch installs.
-    - pytorch ={{ pytorch }}.*
+    - pytorch =${{ pytorch }}.*
 
 
 about:
