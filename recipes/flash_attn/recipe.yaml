@@ -25,8 +25,18 @@ build:
           # Init cutlass submodule (skip composable_kernel - ROCm only)
           git submodule update --init csrc/cutlass
 
-          # Patch setup.py
-          python $SRC_DIR/../patches/flash_attn.py || python patches/flash_attn.py || true
+          # Inline patch: bridge TORCH_CUDA_ARCH_LIST -> FLASH_ATTN_CUDA_ARCHS
+          python -c "
+          import os; from pathlib import Path
+          f=Path('setup.py'); c=f.read_text()
+          c=c.replace('subprocess.run([\"git\", \"submodule\", \"update\", \"--init\", \"csrc/composable_kernel\"])','pass')
+          c=c.replace('subprocess.run([\"git\", \"submodule\", \"update\", \"--init\", \"csrc/cutlass\"])','pass')
+          old='def cuda_archs() -> str:\n    return os.getenv(\"FLASH_ATTN_CUDA_ARCHS\", \"80;90;100;120\").split(\";\")'
+          new='def cuda_archs() -> str:\n    a=os.getenv(\"FLASH_ATTN_CUDA_ARCHS\")\n    if a: return a.split(\";\")\n    t=os.getenv(\"TORCH_CUDA_ARCH_LIST\",\"\")\n    if t: return [x.replace(\".\",\"\") for x in t.split()]\n    return [\"80\",\"90\",\"100\",\"120\"]'
+          if old in c: c=c.replace(old,new); print('Patched cuda_archs')
+          else: print('WARN: cuda_archs not found')
+          f.write_text(c); print('Done')
+          "
 
           PY_TAG="cp${{ python | replace('.', '') }}"
           BASE="torch-${{ pytorch }}%2Bcu${{ cuda_short }}-${PY_TAG}-${PY_TAG}"
@@ -40,12 +50,11 @@ build:
           export LD_LIBRARY_PATH="/tmp/torch_pkg/torch/lib:$LD_LIBRARY_PATH"
           export CUDA_HOME="$PREFIX"
           export MAX_JOBS=1
-          pip install psutil
           $PYTHON -m pip install . --no-deps --no-build-isolation -vv
         else: |
           git submodule update --init csrc/cutlass
 
-          python %SRC_DIR%\..\patches\flash_attn.py
+          python -c "from pathlib import Path;f=Path('setup.py');c=f.read_text();c=c.replace('subprocess.run([\"git\", \"submodule\", \"update\", \"--init\", \"csrc/composable_kernel\"])','pass');c=c.replace('subprocess.run([\"git\", \"submodule\", \"update\", \"--init\", \"csrc/cutlass\"])','pass');f.write_text(c);print('Patched')"
 
           set PY_TAG=cp${{ python | replace('.', '') }}
           set BASE=torch-${{ pytorch }}%%2Bcu${{ cuda_short }}-%PY_TAG%-%PY_TAG%
@@ -55,8 +64,6 @@ build:
           del %TEMP%\torch.whl
           set "PYTHONPATH=%TEMP%\torch_pkg;%PYTHONPATH%"
           set "PATH=%TEMP%\torch_pkg\torch\lib;%PATH%"
-          set "MAX_JOBS=1"
-          pip install psutil
           %PYTHON% -c "import sys,os,subprocess,glob;prefix=os.path.dirname(sys.executable);lib=os.path.join(prefix,'Library');os.environ['CUDA_HOME']=lib;os.environ['CL']='/permissive-';os.environ['MAX_JOBS']='1';os.environ['PATH']=os.path.join(lib,'bin')+';'+os.environ.get('PATH','');vs=r'C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Tools\MSVC';vers=sorted(glob.glob(os.path.join(vs,'14.*')));latest=vers[-1] if vers else '';inc=os.environ.get('INCLUDE','');lib2=os.environ.get('LIB','');path=os.environ.get('PATH','');[os.environ.update({'INCLUDE':inc.replace(old,os.path.basename(latest)),'LIB':lib2.replace(old,os.path.basename(latest)),'PATH':path.replace(old,os.path.basename(latest))}) for old in ['14.29.30133'] if latest];subprocess.check_call([sys.executable,'-m','pip','install','.','--no-deps','--no-build-isolation','-vv'])"
     env:
       FORCE_CUDA: "1"

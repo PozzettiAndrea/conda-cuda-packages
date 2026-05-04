@@ -96,6 +96,7 @@ jobs:
       - name: Build package (Linux)
         if: matrix.platform == 'linux'
         run: |
+          set -o pipefail
           rattler-build build --no-build-id --allow-network --no-test \
             --recipe recipes/${{ matrix.package }}/recipe.yaml \
             --variant-config variants.yaml \
