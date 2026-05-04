@@ -129,11 +129,10 @@ build:
       FORCE_CUDA: "1"
       TORCH_CUDA_ARCH_LIST: ${{ arch_list }}
       NVCC_APPEND_FLAGS: "-diag-suppress 221"
-      # TEMPORARILY DISABLED for the strict-pytorch-dep smoke test rebuild —
-      # without FLASH_ATTENTION_FORCE_BUILD, the install may fall back to a
-      # prebuilt wheel from upstream's PyPI release if one matches the env,
-      # which is fast. Re-enable for production rebuilds.
-      # FLASH_ATTENTION_FORCE_BUILD: "TRUE"
+      # 0 = let pip use upstream's prebuilt wheel when one matches (fast).
+      # Set to 1 to force-build from source (slow but produces a wheel matched
+      # to the exact pytorch+cuda+arch list above).
+      FLASH_ATTENTION_FORCE_BUILD: "0"
 
 requirements:
   build:
