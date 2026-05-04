@@ -2,6 +2,12 @@
 # The actual build matrix comes from packages/*.yml via generate_matrix.py
 # rattler-build uses --variant flags from CI to select the specific combo
 
+c_compiler_version:
+  - "13"
+
+cxx_compiler_version:
+  - "13"
+
 c_stdlib_version:
   - "2.28"
 
