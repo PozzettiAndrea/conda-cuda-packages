@@ -20,7 +20,7 @@ on:
       python:
         description: 'Python version filter (or "all")'
         required: false
-        default: '3.12'
+        default: 'all'
         type: string
       pytorch:
         description: 'PyTorch version filter (or "all")'
