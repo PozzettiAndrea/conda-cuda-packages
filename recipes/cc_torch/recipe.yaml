@@ -69,22 +69,22 @@ requirements:
     - libcufft-dev
     - libcurand-dev
     - libcusolver-dev
-    - libcudnn >=9
-    - libcublas
-    - libcufft
-    - libcurand
-    - libcusolver
-    - libcusparse
-    - cusparselt
-    - libnvjitlink
     - if: linux
       then:
+        - libcudnn >=9
+        - libcublas
+        - libcufft
+        - libcurand
+        - libcusolver
+        - libcusparse
+        - cusparselt
+        - libnvjitlink
         - libcufile
+        - cuda-nvrtc
+        - cuda-cupti
+        - cuda-nvtx
         - nccl
         - libnvshmem3
-    - cuda-nvrtc
-    - cuda-cupti
-    - cuda-nvtx
   run:
     - python
     - __cuda

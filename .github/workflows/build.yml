@@ -122,6 +122,7 @@ jobs:
             --variant python=${{ matrix.python }} `
             --variant pytorch=${{ matrix.pytorch }} `
             --variant c_compiler=vs2022 `
+            --variant cxx_compiler=vs2022 `
             2>&1 | Tee-Object -FilePath build.log
 
       - name: Upload to anaconda.org (Linux)
