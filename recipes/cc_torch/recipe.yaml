@@ -43,8 +43,10 @@ build:
           del %TEMP%\torch.whl
           set "PYTHONPATH=%TEMP%\torch_pkg;%PYTHONPATH%"
           set "PATH=%TEMP%\torch_pkg\torch\lib;%PATH%"
-          start /B "" powershell -NoProfile -ExecutionPolicy Bypass -Command "while ($true) { $os = Get-CimInstance Win32_OperatingSystem; $free = [int]($os.FreePhysicalMemory / 1024); $top = (Get-Process | Sort-Object WorkingSet64 -Descending | Select-Object -First 2 | ForEach-Object { '{0}={1}MB' -f $_.Name, [int]($_.WorkingSet64/1MB) }) -join ' '; Write-Host ('[mem-sample] {0}  free={1}MB  top: {2}' -f (Get-Date -Format HH:mm:ss), $free, $top); Start-Sleep 30 }"
+          echo. > %TEMP%\mem_sample.flag
+          start /B "" powershell -NoProfile -ExecutionPolicy Bypass -Command "while (Test-Path '%TEMP%\mem_sample.flag') { $os = Get-CimInstance Win32_OperatingSystem; $free = [int]($os.FreePhysicalMemory / 1024); $top = (Get-Process | Sort-Object WorkingSet64 -Descending | Select-Object -First 4 | ForEach-Object { '{0}={1}MB' -f $_.Name, [int]($_.WorkingSet64/1MB) }) -join ' '; Write-Host ('[mem-sample] {0}  free={1}MB  top: {2}' -f (Get-Date -Format HH:mm:ss), $free, $top); Start-Sleep 30 }"
           %PYTHON% -c "import sys,os,subprocess,glob;prefix=os.path.dirname(sys.executable);lib=os.path.join(prefix,'Library');os.environ['CUDA_HOME']=lib;os.environ['CL']='/permissive-';os.environ['PATH']=os.path.join(lib,'bin')+';'+os.environ.get('PATH','');vs=r'C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Tools\MSVC';vers=sorted(glob.glob(os.path.join(vs,'14.*')));latest=vers[-1] if vers else '';print('Using MSVC:',latest);inc=os.environ.get('INCLUDE','');lib2=os.environ.get('LIB','');path=os.environ.get('PATH','');[os.environ.update({'INCLUDE':inc.replace(old,os.path.basename(latest)),'LIB':lib2.replace(old,os.path.basename(latest)),'PATH':path.replace(old,os.path.basename(latest))}) for old in ['14.29.30133'] if latest];subprocess.check_call([sys.executable,'-m','pip','install','.','--no-deps','--no-build-isolation','-vv'])"
+          del %TEMP%\mem_sample.flag 2>nul
     env:
       FORCE_CUDA: "1"
       TORCH_CUDA_ARCH_LIST: ${{ arch_list }}
