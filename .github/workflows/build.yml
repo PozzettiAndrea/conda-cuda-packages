@@ -93,6 +93,15 @@ jobs:
           echo $dest | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
           & "$dest\rattler-build.exe" --version
 
+      - name: Add swap (Linux)
+        if: matrix.platform == 'linux'
+        run: |
+          sudo fallocate -l 6G /mnt/swapfile
+          sudo chmod 600 /mnt/swapfile
+          sudo mkswap /mnt/swapfile
+          sudo swapon /mnt/swapfile
+          free -h
+
       - name: Build package (Linux)
         if: matrix.platform == 'linux'
         run: |

@@ -62,8 +62,53 @@ build:
           echo "  NVCC_APPEND_FLAGS=$NVCC_APPEND_FLAGS"
           echo "  CPU count: $(nproc)"
           echo "  Free mem: $(free -g | awk '/^Mem:/ {print $7}')GB"
+          echo "  Swap total: $(free -g | awk '/^Swap:/ {print $2}')GB"
           echo "================================================================"
+
+          # Set up nvcc wrapper for per-file peak RSS measurement
+          mkdir -p /tmp/nvcc-shim
+          cp $RECIPE_DIR/nvcc-wrap.sh /tmp/nvcc-shim/nvcc
+          chmod +x /tmp/nvcc-shim/nvcc
+          export PATH=/tmp/nvcc-shim:$PATH
+          export NVCC_MEM_LOG=/tmp/nvcc-mem.log
+          : > $NVCC_MEM_LOG
+          echo "nvcc wrapper installed: $(which nvcc)"
+
+          # Background memory sampler (every 30s)
+          (
+            while true; do
+              ts=$(date +%H:%M:%S)
+              memline=$(free -m | awk '/^Mem:/ {printf "free=%dMB used=%dMB", $7, $3}')
+              swapline=$(free -m | awk '/^Swap:/ {printf "swap_used=%dMB", $3}')
+              top=$(ps --no-headers -eo rss,comm --sort=-rss | head -2 | awk '{printf "%s=%dMB ", $2, $1/1024}')
+              echo "[mem-sample] $ts  $memline  $swapline  top: $top"
+              sleep 30
+            done
+          ) &
+          SAMPLER_PID=$!
+          trap "kill $SAMPLER_PID 2>/dev/null || true" EXIT
+
           $PYTHON -m pip install . --no-deps --no-build-isolation -vv
+          PIP_RC=$?
+
+          # Stop sampler and print peak RSS summary
+          kill $SAMPLER_PID 2>/dev/null || true
+          echo ""
+          echo "================ NVCC PEAK RSS PER FILE ================"
+          if [ -s "$NVCC_MEM_LOG" ]; then
+            sort -t= -k2 -nr "$NVCC_MEM_LOG"
+            echo ""
+            worst=$(sort -t= -k2 -nr "$NVCC_MEM_LOG" | head -1)
+            echo "Worst: $worst"
+            worst_kib=$(echo "$worst" | grep -oE 'peak_kib=[0-9]+' | cut -d= -f2)
+            if [ -n "$worst_kib" ]; then
+              echo "Worst peak: $((worst_kib / 1024)) MB"
+            fi
+          else
+            echo "(no nvcc invocations logged)"
+          fi
+          echo "========================================================="
+          exit $PIP_RC
         else: |
           git submodule update --init csrc/cutlass
 
