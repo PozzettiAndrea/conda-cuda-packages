@@ -82,7 +82,7 @@ build:
               ts=$(date +%H:%M:%S)
               memline=$(free -m | awk '/^Mem:/ {printf "free=%dMB used=%dMB", $7, $3}')
               swapline=$(free -m | awk '/^Swap:/ {printf "swap_used=%dMB", $3}')
-              top=$(ps --no-headers -eo rss,comm --sort=-rss | head -2 | awk '{printf "%s=%dMB ", $2, $1/1024}')
+              top=$(ps --no-headers -eo rss,comm --sort=-rss | head -4 | awk '{printf "%s=%dMB ", $2, $1/1024}')
               echo "[mem-sample] $ts  $memline  $swapline  top: $top"
               sleep 30
             done
