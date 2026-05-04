@@ -43,7 +43,7 @@ build:
           del %TEMP%\torch.whl
           set "PYTHONPATH=%TEMP%\torch_pkg;%PYTHONPATH%"
           set "PATH=%TEMP%\torch_pkg\torch\lib;%PATH%"
-          %PYTHON% -c "import shutil,sys,os,subprocess; nvcc=shutil.which('nvcc'); os.environ['CUDA_HOME']=os.path.dirname(os.path.dirname(nvcc)) if nvcc else os.path.join(sys.prefix,'Library'); print('CUDA_HOME='+os.environ['CUDA_HOME']); subprocess.check_call([sys.executable,'-m','pip','install','.','--no-deps','--no-build-isolation','-vv'])"
+          %PYTHON% -c "import sys,os,subprocess; prefix=os.path.dirname(sys.executable); lib=os.path.join(prefix,'Library'); os.environ['CUDA_HOME']=lib; os.environ['PATH']=os.path.join(lib,'bin')+';'+os.environ.get('PATH',''); print('CUDA_HOME='+lib); print('nvcc='+os.path.join(lib,'bin','nvcc.exe'),'exists='+str(os.path.exists(os.path.join(lib,'bin','nvcc.exe')))); subprocess.check_call([sys.executable,'-m','pip','install','.','--no-deps','--no-build-isolation','-vv'])"
     env:
       FORCE_CUDA: "1"
       TORCH_CUDA_ARCH_LIST: ${{ arch_list }}
