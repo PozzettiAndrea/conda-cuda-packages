@@ -69,6 +69,7 @@ build:
       FORCE_CUDA: "1"
       TORCH_CUDA_ARCH_LIST: ${{ arch_list }}
       NVCC_APPEND_FLAGS: "-diag-suppress 221"
+      FLASH_ATTENTION_FORCE_BUILD: "TRUE"
 
 requirements:
   build:
