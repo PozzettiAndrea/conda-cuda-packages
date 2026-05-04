@@ -12,6 +12,7 @@ on:
           - all
           - cc_torch
           - torch_generic_nms
+          - flash_attn
       cuda:
         description: 'CUDA version filter (or "all")'
         required: false
