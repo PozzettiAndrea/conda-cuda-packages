@@ -12,25 +12,55 @@ on:
           - cc_torch
           - torch_generic_nms
       cuda:
-        description: 'CUDA version (or "all")'
+        description: 'CUDA version filter (or "all")'
         required: false
-        default: '12.8'
+        default: 'all'
         type: string
       python:
-        description: 'Python version (or "all")'
+        description: 'Python version filter (or "all")'
         required: false
         default: '3.12'
         type: string
       pytorch:
-        description: 'PyTorch version (or "all")'
+        description: 'PyTorch version filter (or "all")'
         required: false
-        default: '2.11.0'
+        default: 'all'
         type: string
+      overwrite:
+        description: 'Rebuild even if package already exists'
+        required: false
+        default: false
+        type: boolean
 
 jobs:
-  build:
-    name: "${{ inputs.package }} | cuda${{ inputs.cuda }} | py${{ inputs.python }} | torch${{ inputs.pytorch }}"
+  generate-matrix:
     runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.matrix.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Generate build matrix
+        id: matrix
+        run: |
+          python3 scripts/generate_matrix.py \
+            --variants variants.yaml \
+            --package "${{ inputs.package }}" \
+            --cuda "${{ inputs.cuda }}" \
+            --python "${{ inputs.python }}" \
+            --pytorch "${{ inputs.pytorch }}" \
+            ${{ inputs.overwrite && '--overwrite' || '' }} \
+            --channel pozzettiandrea
+
+  build:
+    needs: generate-matrix
+    if: ${{ needs.generate-matrix.outputs.matrix != '[]' && needs.generate-matrix.outputs.matrix != '' }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJson(needs.generate-matrix.outputs.matrix) }}
+    name: "${{ matrix.package }} | cu${{ matrix.cuda }} | py${{ matrix.python }} | torch${{ matrix.pytorch }}"
     steps:
       - uses: actions/checkout@v4
 
@@ -42,24 +72,15 @@ jobs:
 
       - name: Build package
         run: |
-          VARIANT_ARGS=""
-          if [ "${{ inputs.cuda }}" != "all" ]; then
-            VARIANT_ARGS="$VARIANT_ARGS --variant cuda_compiler_version=${{ inputs.cuda }}"
-          fi
-          if [ "${{ inputs.python }}" != "all" ]; then
-            VARIANT_ARGS="$VARIANT_ARGS --variant python=${{ inputs.python }}"
-          fi
-          if [ "${{ inputs.pytorch }}" != "all" ]; then
-            VARIANT_ARGS="$VARIANT_ARGS --variant pytorch=${{ inputs.pytorch }}"
-          fi
-
-          rattler-build build --no-build-id --allow-network \
-            --recipe recipes/${{ inputs.package }}/recipe.yaml \
+          rattler-build build --no-build-id --allow-network --no-test \
+            --recipe recipes/${{ matrix.package }}/recipe.yaml \
             --variant-config variants.yaml \
             --channel conda-forge \
             --channel nvidia \
             --channel pytorch \
-            $VARIANT_ARGS \
+            --variant cuda_compiler_version=${{ matrix.cuda }} \
+            --variant python=${{ matrix.python }} \
+            --variant pytorch=${{ matrix.pytorch }} \
             2>&1 | tee build.log
 
       - name: Upload to anaconda.org
@@ -75,5 +96,5 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ inputs.package }}-cuda${{ inputs.cuda }}-py${{ inputs.python }}-torch${{ inputs.pytorch }}
+          name: ${{ matrix.package }}-cu${{ matrix.cuda }}-py${{ matrix.python }}-torch${{ matrix.pytorch }}
           path: output/**/*.conda
