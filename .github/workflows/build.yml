@@ -64,11 +64,11 @@ jobs:
       - name: Upload to anaconda.org
         if: success()
         env:
-          ANACONDA_TOKEN: ${{ secrets.ANACONDA_TOKEN }}
+          ANACONDA_API_TOKEN: ${{ secrets.ANACONDA_TOKEN }}
         run: |
-          pip install anaconda-client
+          pip install "anaconda-client<1.14"
           find output/ -name "*.conda" -exec \
-            anaconda -t $ANACONDA_TOKEN upload --force {} \;
+            anaconda upload --force {} \;
 
       - name: Upload artifact
         if: always()
