@@ -1,7 +1,9 @@
 #!/bin/bash
 # Wrapper around nvcc that records peak RSS per .cu file via getrusage.
-# Activated by prepending its dir to PATH before invoking pip install.
-real=$(which -a nvcc | grep -v "$(dirname "$0")" | head -1)
+# Installed in place of $PREFIX/bin/nvcc; real nvcc moved to nvcc.real.
+self="$(readlink -f "$0")"
+real="$(dirname "$self")/nvcc.real"
+[ -x "$real" ] || real=$(which -a nvcc | grep -v "$self" | head -1)
 cu=$(printf '%s\n' "$@" | grep -E '\.cu$' | tail -1)
 log=${NVCC_MEM_LOG:-/tmp/nvcc-mem.log}
 out=$(mktemp)

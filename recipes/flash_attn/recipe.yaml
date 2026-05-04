@@ -65,14 +65,16 @@ build:
           echo "  Swap total: $(free -g | awk '/^Swap:/ {print $2}')GB"
           echo "================================================================"
 
-          # Set up nvcc wrapper for per-file peak RSS measurement
-          mkdir -p /tmp/nvcc-shim
-          cp $RECIPE_DIR/nvcc-wrap.sh /tmp/nvcc-shim/nvcc
-          chmod +x /tmp/nvcc-shim/nvcc
-          export PATH=/tmp/nvcc-shim:$PATH
+          # nvcc wrapper - replace $PREFIX/bin/nvcc since torch's cpp_extension
+          # calls it directly via $CUDA_HOME, bypassing PATH.
           export NVCC_MEM_LOG=/tmp/nvcc-mem.log
           : > $NVCC_MEM_LOG
-          echo "nvcc wrapper installed: $(which nvcc)"
+          if [ -f "$PREFIX/bin/nvcc" ] && [ ! -f "$PREFIX/bin/nvcc.real" ]; then
+            mv $PREFIX/bin/nvcc $PREFIX/bin/nvcc.real
+            cp $RECIPE_DIR/nvcc-wrap.sh $PREFIX/bin/nvcc
+            chmod +x $PREFIX/bin/nvcc
+            echo "nvcc wrapper installed at $PREFIX/bin/nvcc -> $PREFIX/bin/nvcc.real"
+          fi
 
           # Background memory sampler (every 30s)
           (
