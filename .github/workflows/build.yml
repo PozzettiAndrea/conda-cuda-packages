@@ -83,11 +83,12 @@ jobs:
         if: matrix.platform == 'windows'
         shell: pwsh
         run: |
+          $dest = "$env:USERPROFILE\.local\bin"
           $url = "https://github.com/prefix-dev/rattler-build/releases/latest/download/rattler-build-x86_64-pc-windows-msvc.zip"
           Invoke-WebRequest -Uri $url -OutFile rattler-build.zip
-          Expand-Archive -Path rattler-build.zip -DestinationPath "$env:USERPROFILE\.local\bin" -Force
-          echo "$env:USERPROFILE\.local\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
-          rattler-build --version
+          Expand-Archive -Path rattler-build.zip -DestinationPath $dest -Force
+          echo $dest | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+          & "$dest\rattler-build.exe" --version
 
       - name: Build package (Linux)
         if: matrix.platform == 'linux'
