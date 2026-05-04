@@ -44,14 +44,6 @@ requirements:
     - cuda-nvcc ${{ cuda_compiler_version }}.*
     - cuda-cudart-dev ${{ cuda_compiler_version }}.*
     - cuda-cccl
-    - libcudnn >=9
-    - libcublas
-    - libnccl
-    - libcufft
-    - libcusparse
-    - libcusolver
-    - libcurand
-    - cuda-nvrtc
   run:
     - python
     - __cuda
