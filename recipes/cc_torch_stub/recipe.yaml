@@ -9,12 +9,12 @@ package:
 build:
   noarch: generic
   number: 0
+  # Build string starts with "cpu_" so it sorts BEFORE the real GPU builds
+  # (cu12.8_..., cu12.6_..., etc.) lexicographically. Conda's tiebreaker after
+  # version + build_number is the build string — GREATER wins. 'cu' > 'cp', so
+  # GPU builds always beat this stub when both resolve. The stub only "wins"
+  # when GPU builds are filtered out by missing __cuda virtual.
   string: "cpu_stub"
-  # track_features deprioritizes this build versus real GPU builds. On a host
-  # where __cuda is exposed, the GPU build resolves and is preferred. On a host
-  # without __cuda, the GPU builds are filtered out and only this stub remains.
-  track_features:
-    - cc_torch_cpu_stub
   script:
     content:
       - if: unix

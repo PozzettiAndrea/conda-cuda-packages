@@ -70,6 +70,7 @@ jobs:
         recipe:
           - cc_torch_stub
           - torch_generic_nms_stub
+          - flash_attn_stub
     name: "stub | ${{ matrix.recipe }}"
     steps:
       - uses: actions/checkout@v4

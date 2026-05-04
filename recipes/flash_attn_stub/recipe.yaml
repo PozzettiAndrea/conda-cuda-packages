@@ -1,6 +1,6 @@
 context:
-  name: torch_generic_nms
-  version: "0.1.0"
+  name: flash_attn
+  version: "2.8.3"
 
 package:
   name: ${{ name }}
@@ -37,6 +37,6 @@ requirements:
   run: []
 
 about:
-  homepage: https://github.com/ronghanghu/torch_generic_nms
-  license: MIT
-  summary: CPU-only stub for torch_generic_nms (real package is GPU-only). Installs no module so `import torch_generic_nms` raises ModuleNotFoundError.
+  homepage: https://github.com/Dao-AILab/flash-attention
+  license: BSD-3-Clause
+  summary: CPU-only stub for flash_attn (real package is GPU-only). Installs no module so `import flash_attn` raises ModuleNotFoundError.
