@@ -22,8 +22,10 @@ build:
     content:
       - |
         PY_TAG="cp${{ python | replace('.', '') }}"
-        TORCH_WHL="torch-${{ pytorch }}%2Bcu${{ cuda_short }}-${PY_TAG}-${PY_TAG}-manylinux_2_28_x86_64.whl"
-        curl -fSL "https://download.pytorch.org/whl/cu${{ cuda_short }}/${TORCH_WHL}" -o /tmp/torch.whl
+        BASE="torch-${{ pytorch }}%2Bcu${{ cuda_short }}-${PY_TAG}-${PY_TAG}"
+        URL="https://download.pytorch.org/whl/cu${{ cuda_short }}"
+        curl -fSL "${URL}/${BASE}-manylinux_2_28_x86_64.whl" -o /tmp/torch.whl 2>/dev/null || \
+        curl -fSL "${URL}/${BASE}-linux_x86_64.whl" -o /tmp/torch.whl
         mkdir -p /tmp/torch_pkg
         unzip -q /tmp/torch.whl -d /tmp/torch_pkg/
         rm /tmp/torch.whl

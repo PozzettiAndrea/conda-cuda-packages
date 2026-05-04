@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate build matrix from variants.yaml, filtering by inputs and existing packages."""
+"""Generate build matrix from packages/*.yml, filtering by inputs and existing packages."""
 
 import argparse
 import json
@@ -11,37 +11,30 @@ from pathlib import Path
 import yaml
 
 
-def load_variants(path: str) -> dict:
+def load_package_config(package: str) -> dict:
+    path = Path(__file__).parent.parent / "packages" / f"{package}.yml"
     with open(path) as f:
         return yaml.safe_load(f)
 
 
-def get_combinations(variants: dict) -> list[dict]:
-    """Expand variants.yaml into list of {cuda, pytorch, python} combos."""
-    zip_keys = variants.get("zip_keys", [])
-    cuda_versions = variants["cuda_compiler_version"]
-    pytorch_versions = variants["pytorch"]
-    python_versions = variants["python"]
-
-    # cuda and pytorch are zipped together
-    cuda_torch_pairs = list(zip(cuda_versions, pytorch_versions))
-
+def get_combinations(config: dict) -> list[dict]:
+    """Expand package config into list of {cuda, pytorch, python} combos."""
     combos = []
-    for cuda, pytorch in cuda_torch_pairs:
-        for python in python_versions:
+    for entry in config["build_matrix"]["combinations"]:
+        for py in entry["python_versions"]:
             combos.append({
-                "cuda": cuda,
-                "pytorch": pytorch,
-                "python": python,
+                "cuda": entry["cuda"],
+                "pytorch": entry["pytorch"],
+                "python": py,
             })
     return combos
 
 
 def get_packages(package_input: str) -> list[str]:
     """Get list of packages to build."""
-    recipes_dir = Path(__file__).parent.parent / "recipes"
+    packages_dir = Path(__file__).parent.parent / "packages"
     if package_input == "all":
-        return [d.name for d in recipes_dir.iterdir() if d.is_dir() and (d / "recipe.yaml").exists()]
+        return [p.stem for p in packages_dir.glob("*.yml")]
     return [package_input]
 
 
@@ -70,7 +63,6 @@ def get_package_version(package: str) -> str:
     recipe_path = Path(__file__).parent.parent / "recipes" / package / "recipe.yaml"
     with open(recipe_path) as f:
         content = f.read()
-    # Simple parse — look for version: "X.Y.Z" in context
     for line in content.splitlines():
         if "version:" in line and '"' in line:
             return line.split('"')[1]
@@ -79,7 +71,7 @@ def get_package_version(package: str) -> str:
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--variants", required=True)
+    parser.add_argument("--variants", required=False, help="(unused, kept for compat)")
     parser.add_argument("--package", default="all")
     parser.add_argument("--cuda", default="all")
     parser.add_argument("--python", default="all")
@@ -88,26 +80,25 @@ def main():
     parser.add_argument("--channel", default="pozzettiandrea")
     args = parser.parse_args()
 
-    variants = load_variants(args.variants)
-    combos = get_combinations(variants)
     packages = get_packages(args.package)
-
-    # Filter by inputs
-    if args.cuda != "all":
-        combos = [c for c in combos if c["cuda"] == args.cuda]
-    if args.python != "all":
-        combos = [c for c in combos if c["python"] == args.python]
-    if args.pytorch != "all":
-        combos = [c for c in combos if c["pytorch"] == args.pytorch]
 
     matrix = []
     for package in packages:
+        config = load_package_config(package)
         version = get_package_version(package)
+        combos = get_combinations(config)
+
+        # Filter by inputs
+        if args.cuda != "all":
+            combos = [c for c in combos if c["cuda"] == args.cuda]
+        if args.python != "all":
+            combos = [c for c in combos if c["python"] == args.python]
+        if args.pytorch != "all":
+            combos = [c for c in combos if c["pytorch"] == args.pytorch]
+
         for combo in combos:
             cuda_short = combo["cuda"].replace(".", "")
-            torch_short = combo["pytorch"].replace(".", "")
-            py_short = combo["python"].replace(".", "")
-            build_prefix = f"cu{cuda_short}_torch{torch_short}_py{py_short}"
+            build_prefix = f"cu{combo['cuda']}_torch{combo['pytorch']}_py{combo['python']}"
 
             if not args.overwrite:
                 if check_existing(args.channel, package, version, build_prefix):
