@@ -1,4 +1,5 @@
 name: Build Conda Packages
+run-name: "Build ${{ inputs.package }} | cu${{ inputs.cuda }} py${{ inputs.python }} torch${{ inputs.pytorch }}${{ inputs.overwrite && ' [overwrite]' || '' }}"
 
 on:
   workflow_dispatch:
