@@ -50,10 +50,10 @@ build:
 
 requirements:
   build:
-    - ${{ compiler('c') }}
-    - ${{ compiler('cxx') }}
     - if: linux
       then:
+        - ${{ compiler('c') }}
+        - ${{ compiler('cxx') }}
         - ${{ stdlib('c') }}
         - patchelf
   host:
