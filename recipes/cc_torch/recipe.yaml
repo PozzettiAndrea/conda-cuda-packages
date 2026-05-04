@@ -50,7 +50,12 @@ requirements:
     - libcurand
     - libcusolver
     - libcusparse
+    - libcusparselt
+    - libnvjitlink
+    - libcufile
     - cuda-nvrtc
+    - cuda-cupti
+    - cuda-nvtx
     - nccl
   run:
     - python
