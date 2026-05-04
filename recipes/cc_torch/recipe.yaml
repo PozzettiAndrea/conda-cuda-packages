@@ -17,7 +17,7 @@ source:
 
 build:
   number: 0
-  string: "cu${{ cuda_short }}_torch${{ pytorch | replace('.', '') }}_py${{ python | replace('.', '') }}_${{ target_platform }}_${{ PKG_HASH }}"
+  string: "cu${{ cuda_short }}_torch${{ pytorch | replace('.', '') }}_py${{ python | replace('.', '') }}_${{ target_platform }}"
   script:
     content:
       - |
