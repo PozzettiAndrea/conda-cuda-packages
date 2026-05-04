@@ -137,7 +137,7 @@ jobs:
           ANACONDA_API_TOKEN: ${{ secrets.ANACONDA_TOKEN }}
         shell: pwsh
         run: |
-          pip install "anaconda-client<1.14"
+          pip install "anaconda-client<1.14" "setuptools<81"
           Get-ChildItem -Recurse -Filter "*.conda" output/ | ForEach-Object { anaconda upload --force $_.FullName }
 
       - name: Upload artifact
