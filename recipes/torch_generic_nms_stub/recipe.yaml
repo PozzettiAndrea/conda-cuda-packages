@@ -1,0 +1,42 @@
+context:
+  name: torch_generic_nms
+  version: "0.1.0"
+
+package:
+  name: ${{ name }}
+  version: ${{ version }}
+
+build:
+  noarch: generic
+  number: 0
+  string: "cpu_stub"
+  # track_features deprioritizes this build versus real GPU builds. On a host
+  # where __cuda is exposed, the GPU build resolves and is preferred. On a host
+  # without __cuda, the GPU builds are filtered out and only this stub remains.
+  track_features:
+    - torch_generic_nms_cpu_stub
+  script:
+    content:
+      - if: unix
+        then: |
+          mkdir -p "$PREFIX/share/${{ name }}"
+          cat > "$PREFIX/share/${{ name }}/STUB.txt" <<'EOF'
+          ${{ name }} CPU stub.
+
+          This artifact installs no Python module. The real ${{ name }} package
+          is GPU-only; on hosts without CUDA the conda solver picks this stub so
+          dependent environments still build. Importing ${{ name }} in Python
+          will raise ModuleNotFoundError, and the consuming code is expected to
+          catch that and fall back to a CPU implementation.
+          EOF
+        else: |
+          if not exist "%PREFIX%\share\${{ name }}" mkdir "%PREFIX%\share\${{ name }}"
+          > "%PREFIX%\share\${{ name }}\STUB.txt" echo ${{ name }} CPU stub - no Python module installed.
+
+requirements:
+  run: []
+
+about:
+  homepage: https://github.com/ronghanghu/torch_generic_nms
+  license: MIT
+  summary: CPU-only stub for torch_generic_nms (real package is GPU-only). Installs no module so `import torch_generic_nms` raises ModuleNotFoundError.
