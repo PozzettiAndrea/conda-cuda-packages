@@ -50,6 +50,7 @@ build:
           export LD_LIBRARY_PATH="/tmp/torch_pkg/torch/lib:$LD_LIBRARY_PATH"
           export CUDA_HOME="$PREFIX"
           export MAX_JOBS=1
+          export NVCC_THREADS=1
           echo "================================================================"
           echo "BUILD PARAMETERS:"
           echo "  TORCH_CUDA_ARCH_LIST=$TORCH_CUDA_ARCH_LIST"
