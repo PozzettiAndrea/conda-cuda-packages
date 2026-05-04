@@ -29,6 +29,7 @@ on:
 
 jobs:
   build:
+    name: "${{ inputs.package }} | cuda${{ inputs.cuda }} | py${{ inputs.python }} | torch${{ inputs.pytorch }}"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
