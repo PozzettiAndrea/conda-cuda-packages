@@ -144,9 +144,11 @@ requirements:
     - python
     - __cuda
     - cuda-cudart
-  run_constraints:
-    - cuda-version >=${{ cuda_compiler_version }}
-    - pytorch >=${{ pytorch }}
+    # Hard pin on the matching pytorch minor: forces the conda solver to pick a
+    # torch_generic_nms build whose torch ABI matches whatever pytorch lands in
+    # the env. Replaces the previous loose `run_constraints: pytorch >=X`,
+    # which conda silently ignored when pytorch came from pip instead of conda.
+    - pytorch ={{ pytorch }}.*
 
 
 about:
