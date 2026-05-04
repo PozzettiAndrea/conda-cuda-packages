@@ -32,6 +32,7 @@ build:
           rm /tmp/torch.whl
           export PYTHONPATH="/tmp/torch_pkg:$PYTHONPATH"
           export LD_LIBRARY_PATH="/tmp/torch_pkg/torch/lib:$LD_LIBRARY_PATH"
+          export CUDA_HOME="$PREFIX"
           $PYTHON -m pip install . --no-deps --no-build-isolation -vv
         else: |
           set PY_TAG=cp${{ python | replace('.', '') }}
@@ -42,11 +43,11 @@ build:
           del %TEMP%\torch.whl
           set "PYTHONPATH=%TEMP%\torch_pkg;%PYTHONPATH%"
           set "PATH=%TEMP%\torch_pkg\torch\lib;%PATH%"
+          set "CUDA_HOME=%PREFIX%"
           %PYTHON% -m pip install . --no-deps --no-build-isolation -vv
     env:
       FORCE_CUDA: "1"
       TORCH_CUDA_ARCH_LIST: ${{ arch_list }}
-      CUDA_HOME: $PREFIX
 
 requirements:
   build:
