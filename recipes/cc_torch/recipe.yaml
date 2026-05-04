@@ -43,7 +43,7 @@ build:
           del %TEMP%\torch.whl
           set "PYTHONPATH=%TEMP%\torch_pkg;%PYTHONPATH%"
           set "PATH=%TEMP%\torch_pkg\torch\lib;%PATH%"
-          set "CUDA_HOME=%PREFIX%"
+          for %%P in ("%PREFIX%") do set "CUDA_HOME=%%~fP"
           %PYTHON% -m pip install . --no-deps --no-build-isolation -vv
     env:
       FORCE_CUDA: "1"
